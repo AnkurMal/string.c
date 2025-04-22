@@ -24,7 +24,9 @@ String string_new(const char *str) {
     string.capacity = INIT_STRING_CAP;
 
     string.print = print;
+    string.println = println;
     string.print_debug = print_debug;
+    string.println_debug = println_debug;
     string.at = at;
     string.push = push;
     string.split = split;
@@ -50,10 +52,20 @@ void print(String *str) {
     }
 }
 
+void println(String *str) {
+    str->print(str);
+    printf("\n");
+}
+
 void print_debug(String *str) {
     printf("String { len: %zu, capacity: %zu, arr: \"", str->len, str->capacity);
     str->print(str);
     printf("\" }");
+}
+
+void println_debug(String *str) {
+    str->print_debug(str);
+    printf("\n");
 }
 
 char at(String *str, int64_t index) {
@@ -157,7 +169,9 @@ Vec vec_new() {
     vec.pop = vec_pop;
     vec.at = vec_at;
     vec.print = vec_print;
+    vec.println = vec_println;
     vec.print_debug = vec_print_debug;
+    vec.println_debug = vec_println_debug;
 
     return vec;
 }
@@ -194,10 +208,20 @@ void vec_print(Vec *vec) {
     printf("]");
 }
 
+void vec_println(Vec *vec) {
+    vec->print(vec);
+    printf("\n");
+}
+
 void vec_print_debug(Vec *vec) {
     printf("Vec { len: %zu, capacity: %zu, arr: ", vec->len, vec->capacity);
     vec->print(vec);
     printf(" }");
+}
+
+void vec_println_debug(Vec *vec) {
+    vec->print_debug(vec);
+    printf("\n");
 }
 
 String *vec_at(Vec *vec, int64_t index) {

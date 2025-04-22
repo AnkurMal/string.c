@@ -3,7 +3,7 @@
 int main(void) {
     String str = String("HELLO");
     str.to_lower(&str);
-    str.print(&str);
+    str.println(&str);
 
     return 0;
 }

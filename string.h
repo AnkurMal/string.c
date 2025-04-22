@@ -12,7 +12,9 @@ typedef struct String {
     char   *arr;
 
     void        (*print)(struct String *self);
+    void        (*println)(struct String *self);
     void        (*print_debug)(struct String *self);
+    void        (*println_debug)(struct String *self);
     char        (*at)(struct String *self, int64_t index);
     void        (*push)(struct String *self, char character);
     struct Vec  (*split)(struct String *self, const char *delimeter); 
@@ -34,12 +36,16 @@ typedef struct Vec {
     String* (*pop)(struct Vec *self);
     String* (*at)(struct Vec *self, int64_t index);
     void    (*print)(struct Vec *self);
+    void    (*println)(struct Vec *self);
     void    (*print_debug)(struct Vec *self);
+    void    (*println_debug)(struct Vec *self);
 } Vec;
 
 String string_new(const char *str);
 void   print(String *str);
+void   println(String *str);
 void   print_debug(String *str);
+void   println_debug(String *str);
 char   at(String *str, int64_t index);
 void   push(String *str, char character);
 Vec    split(String *str, const char *delimeter); 
@@ -56,6 +62,8 @@ void   vec_push(Vec *vec, String *data);
 String *vec_pop(Vec *vec);
 String *vec_at(Vec *vec, int64_t index);
 void   vec_print(Vec *vec);
+void   vec_println(Vec *vec);
 void   vec_print_debug(Vec *vec);
+void   vec_println_debug(Vec *vec);
 
 const char *format(const char *fmt, ...);
