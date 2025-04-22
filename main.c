@@ -5,5 +5,6 @@ int main(void) {
     str.to_lower(&str);
     str.println(&str);
 
+    str.free(&str);
     return 0;
 }
