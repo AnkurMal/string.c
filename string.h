@@ -4,66 +4,48 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#define String(str) string_new(str);
+// credit: <https://stackoverflow.com/a/400970>
+#define foreach(item, var) \
+    for(size_t keep = 1, count = 0; keep && count != var.len; keep = !keep, count++) \
+        for(typeof(var.arr[0]) item = var.arr[count]; keep; keep = !keep)
+
+#define String(str) string_new(str)
 
 typedef struct String {
     size_t len;
     size_t capacity;
     char   *arr;
-
-    void        (*print)(struct String *self);
-    void        (*println)(struct String *self);
-    void        (*print_debug)(struct String *self);
-    void        (*println_debug)(struct String *self);
-    char        (*at)(struct String *self, int64_t index);
-    void        (*push)(struct String *self, char character);
-    struct Vec  (*split)(struct String *self, const char *delimeter); 
-    void        (*free)(struct String *self);
-    bool        (*equals)(struct String *self, struct String *cmp);
-    void        (*map)(struct String *self, void (*func)(struct String *self));
-    void        (*change)(struct String *self, int64_t index, char chr);
-    void        (*to_upper)(struct String *self);
-    void        (*to_lower)(struct String *self);
 } String;
 
 typedef struct Vec {
     size_t len;
     size_t capacity;
-    String **arr;
-
-    void    (*free)(struct Vec *self);
-    void    (*push)(struct Vec *self, String *data);
-    String* (*pop)(struct Vec *self);
-    String* (*at)(struct Vec *self, int64_t index);
-    void    (*print)(struct Vec *self);
-    void    (*println)(struct Vec *self);
-    void    (*print_debug)(struct Vec *self);
-    void    (*println_debug)(struct Vec *self);
+    String *arr;
 } Vec;
 
 String string_new(const char *str);
-void   print(String *str);
-void   println(String *str);
-void   print_debug(String *str);
-void   println_debug(String *str);
-char   at(String *str, int64_t index);
-void   push(String *str, char character);
-Vec    split(String *str, const char *delimeter); 
+void   string_print(String *str);
+void   string_println(String *str);
+void   string_print_debug(String *str);
+void   string_println_debug(String *str);
+char   string_at(String *str, int64_t index);
+void   string_push(String *str, char character);
+Vec    string_split(String *str, const char *delimeter); 
 void   string_free(String *str);
-bool   equals(String *str1, String *str2);
-void   map(String *str, void (*func)(String *str));
-void   change(String *str, int64_t index, char chr);
-void   to_upper(String *str);
-void   to_lower(String *str);
+bool   string_equals(String *str1, String *str2);
+void   string_map(String *str, void (*func)(String *str));
+void   string_change(String *str, int64_t index, char chr);
+void   string_to_upper(String *str);
+void   string_to_lower(String *str);
 
 Vec    vec_new();
 void   vec_free(Vec *vec);
-void   vec_push(Vec *vec, String *data);
-String *vec_pop(Vec *vec);
-String *vec_at(Vec *vec, int64_t index);
+void   vec_push(Vec *vec, String data);
+String vec_pop(Vec *vec);
+String vec_at(Vec *vec, int64_t index);
 void   vec_print(Vec *vec);
 void   vec_println(Vec *vec);
 void   vec_print_debug(Vec *vec);
 void   vec_println_debug(Vec *vec);
 
-const char *format(const char *fmt, ...);
+char   *format(const char *fmt, ...);

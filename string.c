@@ -23,20 +23,6 @@ String string_new(const char *str) {
     string.len = strlen(str);
     string.capacity = INIT_STRING_CAP;
 
-    string.print = print;
-    string.println = println;
-    string.print_debug = print_debug;
-    string.println_debug = println_debug;
-    string.at = at;
-    string.push = push;
-    string.split = split;
-    string.free = string_free;
-    string.equals = equals;
-    string.map = map;
-    string.change = change;
-    string.to_upper = to_upper;
-    string.to_lower = to_lower;
-
     while (string.capacity < string.len) string.capacity *= 2;
     string.arr = (char *)malloc(string.capacity);
     __assert(string.arr!=NULL, "%s", "Not enough memory to create new string.");
@@ -46,35 +32,35 @@ String string_new(const char *str) {
     return string;
 }
 
-void print(String *str) {
+void string_print(String *str) {
     for(size_t i=0; i < str->len; i++) {
         printf("%c", str->arr[i]);
     }
 }
 
-void println(String *str) {
-    str->print(str);
+void string_println(String *str) {
+    string_print(str);
     printf("\n");
 }
 
-void print_debug(String *str) {
+void string_print_debug(String *str) {
     printf("String { len: %zu, capacity: %zu, arr: \"", str->len, str->capacity);
-    str->print(str);
+    string_print(str);
     printf("\" }");
 }
 
-void println_debug(String *str) {
-    str->print_debug(str);
+void string_println_debug(String *str) {
+    string_print_debug(str);
     printf("\n");
 }
 
-char at(String *str, int64_t index) {
+char string_at(String *str, int64_t index) {
     __assert(index>=0, "Accessing at index %lld is not allowed.", index);
     __assert((size_t)index<str->len, "Accessing at index %lld, but the length is %zd.", index, str->len);
     return str->arr[index];
 }
 
-void push(String *str, char character) {
+void string_push(String *str, char character) {
     if(str->len==str->capacity) {
         str->capacity *= 2;
         char *new  = realloc(str->arr, str->capacity);
@@ -84,7 +70,7 @@ void push(String *str, char character) {
     str->arr[str->len++] = character;
 }
 
-Vec split(String *str, const char *delimeter) {
+Vec string_split(String *str, const char *delimeter) {
     Vec vec = vec_new();
     size_t del_len = strlen(delimeter);
     size_t current = 0;
@@ -102,23 +88,15 @@ Vec split(String *str, const char *delimeter) {
         __assert(slice!=NULL, "%s", "Not enough memory.");
         memcpy(slice, &string[current], index);
         slice[index] = '\0';
-        
-        String *new_slice = malloc(sizeof(String));
-        __assert(new_slice!=NULL, "%s", "Not enough memory.");
-        *new_slice = string_new(slice);
 
-        vec.push(&vec, new_slice);
+        vec_push(&vec, string_new(slice));
         free(slice);
 
         current += index+del_len;
         str_ptr = strstr(&string[current], delimeter);
     }
     if (current < str->len) {
-        String *new_slice = malloc(sizeof(String));
-        __assert(new_slice!=NULL, "%s", "Not enough memory.");
-        *new_slice = string_new(&string[current]);
-
-        vec.push(&vec, new_slice);
+        vec_push(&vec, string_new(&string[current]));
     }
 
     free(string);
@@ -132,61 +110,52 @@ void string_free(String *str) {
     str->arr = NULL;
 }
 
-bool equals(String *str1, String *str2) {
+bool string_equals(String *str1, String *str2) {
     if (str1->len != str2->len) return false;
     return memcmp(str1->arr, str2->arr, str1->len) == 0;
 }
 
-void map(String *str, void (*func)(String *str)) {
+void string_map(String *str, void (*func)(String *str)) {
     func(str);
 }
 
-void change(String *str, int64_t index, char chr) {
+void string_change(String *str, int64_t index, char chr) {
     __assert(index>=0, "Accessing at index %lld is not allowed.", index);
     __assert((size_t)index<str->len, "Accessing at index %lld, but the length is %zd.", index, str->len);
     str->arr[index] = chr;
 }
 
-void to_upper(String *str) {
+void string_to_upper(String *str) {
     for(size_t i=0; i<str->len; i++) {
         str->arr[i] = (char)toupper(str->arr[i]);
     }
 }
 
-void to_lower(String *str) {
+void string_to_lower(String *str) {
     for(size_t i=0; i<str->len; i++) {
         str->arr[i] = (char)tolower(str->arr[i]);
     }
 }
 
 Vec vec_new() {
-    String **arr = malloc(sizeof(String*)*INIT_VEC_CAP);
+    String *arr = malloc(sizeof(String)*INIT_VEC_CAP);
     __assert(arr!=NULL, "%s", "Not enough memory to create new vector.");
     Vec vec = {0, INIT_VEC_CAP, arr};
-
-    vec.free = vec_free;
-    vec.push = vec_push;
-    vec.pop = vec_pop;
-    vec.at = vec_at;
-    vec.print = vec_print;
-    vec.println = vec_println;
-    vec.print_debug = vec_print_debug;
-    vec.println_debug = vec_println_debug;
 
     return vec;
 }
 
-void vec_push(Vec *vec, String *data) {
+void vec_push(Vec *vec, String data) {
     if(vec->len==vec->capacity) {
         vec->capacity *= 2;
-        String **new = realloc(vec->arr, sizeof(String*)*vec->capacity);
+        String *new = realloc(vec->arr, sizeof(String)*vec->capacity);
         __assert(new!=NULL, "%s", "Not enough memory to insert string.");
         vec->arr = new;
     }
     vec->arr[vec->len++] = data;
 }
 
-String *vec_pop(Vec *vec) {
+String vec_pop(Vec *vec) {
     __assert(vec->len>0, "%s", "Cannot pop, vector underflow.");
     return vec->arr[--vec->len];
 }
@@ -196,12 +165,12 @@ void vec_print(Vec *vec) {
     for(size_t i=0; i<vec->len; i++) {
         if(i!=vec->len-1) {
             printf("\"");
-            vec->arr[i]->print(vec->arr[i]);
+            string_print(&vec->arr[i]);
             printf("\", ");
         }
         else {
             printf("\"");
-            vec->arr[i]->print(vec->arr[i]);
+            string_print(&vec->arr[i]);
             printf("\"");
         }
     }
@@ -209,22 +178,22 @@ void vec_print(Vec *vec) {
 }
 
 void vec_println(Vec *vec) {
-    vec->print(vec);
+    vec_print(vec);
     printf("\n");
 }
 
 void vec_print_debug(Vec *vec) {
     printf("Vec { len: %zu, capacity: %zu, arr: ", vec->len, vec->capacity);
-    vec->print(vec);
+    vec_print(vec);
     printf(" }");
 }
 
 void vec_println_debug(Vec *vec) {
-    vec->print_debug(vec);
+    vec_print_debug(vec);
     printf("\n");
 }
 
-String *vec_at(Vec *vec, int64_t index) {
+String vec_at(Vec *vec, int64_t index) {
     __assert(index>=0, "Accessing at index %lld is not allowed.", index);
     __assert((size_t)index<vec->len, "Accessing at index %lld, but the length is %zd.", index, vec->len);
     return vec->arr[index];
@@ -232,8 +201,7 @@ String *vec_at(Vec *vec, int64_t index) {
 
 void vec_free(Vec *vec) {
     for(size_t i=0; i<vec->len; i++) {
-        free(vec->arr[i]->arr);
-        free(vec->arr[i]);
+        free(vec->arr[i].arr);
     }
     vec->len = 0;
     vec->capacity = INIT_VEC_CAP;
@@ -241,7 +209,7 @@ void vec_free(Vec *vec) {
     vec->arr = NULL;
 }
 
-const char *format(const char *fmt, ...) {
+char *format(const char *fmt, ...) {
     va_list args;
 
     va_start(args, fmt);

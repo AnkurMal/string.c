@@ -1,10 +1,14 @@
 #include "string.h"
+#include <stdio.h>
 
 int main(void) {
-    String str = String("HELLO");
-    str.to_lower(&str);
-    str.println(&str);
+    String str = String("Hello World");
+    Vec spl = string_split(&str, " ");
+    foreach(i, spl) {
+        string_println(&i);
+    }
 
-    str.free(&str);
+    vec_free(&spl);
+    string_free(&str);
     return 0;
 }
