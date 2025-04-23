@@ -2,11 +2,10 @@
 #include <stdio.h>
 
 int main(void) {
-    printf("Enter a string: ");
-    String str = string_input();
-
-    printf("The string entered: ");
-    string_println(&str);
+    String str = String("  Hello  ");
+    string_trim(&str);
+    string_print(&str);
+    printf("hey");
 
     string_free(&str);
     return 0;

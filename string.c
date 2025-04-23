@@ -10,8 +10,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#define INIT_STRING_CAP 256
-#define INIT_split_CAP    8
+#define INIT_STRING_CAP   256
+#define INIT_SPLIT_CAP    8
 
 #define __assert(expression, format, ...) \
     do { \
@@ -152,10 +152,38 @@ String string_input() {
     return buff;
 }
 
+bool string_is_empty(String *str) {
+    return str->len==0;
+}
+
+void string_trim_right(String *str) {
+    if(str->len != 0)
+        while (str->len>0 && isspace(str->arr[str->len-1]))
+            str->len--;
+}
+
+void string_trim_left(String *str) {
+    if(str->len != 0) {
+        size_t start = 0;
+        while (start<str->len && isspace(str->arr[start]))
+            start++;
+        
+        if(start>0) {
+            str->len -= start;
+            memmove(str->arr, &str->arr[start], str->len);
+        }
+    }
+}
+
+void string_trim(String *str) {
+    string_trim_left(str);
+    string_trim_right(str);
+}
+
 StringSplit split_new() {
-    String *arr = malloc(sizeof(String)*INIT_split_CAP);
+    String *arr = malloc(sizeof(String)*INIT_SPLIT_CAP);
     __assert(arr!=NULL, "%s", "Not enough memory to create new vector.");
-    StringSplit vec = {0, INIT_split_CAP, arr};
+    StringSplit vec = {0, INIT_SPLIT_CAP, arr};
 
     return vec;
 }
@@ -219,7 +247,7 @@ void split_free(StringSplit *vec) {
         free(vec->arr[i].arr);
     }
     vec->len = 0;
-    vec->capacity = INIT_split_CAP;
+    vec->capacity = INIT_SPLIT_CAP;
     free(vec->arr);
     vec->arr = NULL;
 }

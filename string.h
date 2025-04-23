@@ -38,6 +38,10 @@ void        string_change(String *str, int64_t index, char chr);
 void        string_to_upper(String *str);
 void        string_to_lower(String *str);
 String      string_input();
+bool        string_is_empty(String *str);
+void        string_trim_right(String *str);
+void        string_trim_left(String *str);
+void        string_trim(String *str);
 
 StringSplit split_new();
 void        split_free(StringSplit *vec);
