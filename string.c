@@ -1,4 +1,9 @@
-#include "string.h"
+#if __has_include("string.h")
+    #include "string.h"
+#else 
+    #error "Error: string.h not found"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +11,7 @@
 #include <ctype.h>
 
 #define INIT_STRING_CAP 256
-#define INIT_VEC_CAP    8
+#define INIT_split_CAP    8
 
 #define __assert(expression, format, ...) \
     do { \
@@ -70,8 +75,8 @@ void string_push(String *str, char character) {
     str->arr[str->len++] = character;
 }
 
-Vec string_split(String *str, const char *delimeter) {
-    Vec vec = vec_new();
+StringSplit string_split(String *str, const char *delimeter) {
+    StringSplit vec = split_new();
     size_t del_len = strlen(delimeter);
     size_t current = 0;
 
@@ -89,14 +94,14 @@ Vec string_split(String *str, const char *delimeter) {
         memcpy(slice, &string[current], index);
         slice[index] = '\0';
 
-        vec_push(&vec, string_new(slice));
+        split_push(&vec, string_new(slice));
         free(slice);
 
         current += index+del_len;
         str_ptr = strstr(&string[current], delimeter);
     }
     if (current < str->len) {
-        vec_push(&vec, string_new(&string[current]));
+        split_push(&vec, string_new(&string[current]));
     }
 
     free(string);
@@ -137,15 +142,25 @@ void string_to_lower(String *str) {
     }
 }
 
-Vec vec_new() {
-    String *arr = malloc(sizeof(String)*INIT_VEC_CAP);
+String string_input() {
+    String buff = String("");
+    char ch;
+
+    while ((ch = (char)getchar()) != '\n' && ch != EOF) {
+        string_push(&buff, ch);
+    }
+    return buff;
+}
+
+StringSplit split_new() {
+    String *arr = malloc(sizeof(String)*INIT_split_CAP);
     __assert(arr!=NULL, "%s", "Not enough memory to create new vector.");
-    Vec vec = {0, INIT_VEC_CAP, arr};
+    StringSplit vec = {0, INIT_split_CAP, arr};
 
     return vec;
 }
 
-void vec_push(Vec *vec, String data) {
+void split_push(StringSplit *vec, String data) {
     if(vec->len==vec->capacity) {
         vec->capacity *= 2;
         String *new = realloc(vec->arr, sizeof(String)*vec->capacity);
@@ -155,12 +170,12 @@ void vec_push(Vec *vec, String data) {
     vec->arr[vec->len++] = data;
 }
 
-String vec_pop(Vec *vec) {
+String split_pop(StringSplit *vec) {
     __assert(vec->len>0, "%s", "Cannot pop, vector underflow.");
     return vec->arr[--vec->len];
 }
 
-void vec_print(Vec *vec) {
+void split_print(StringSplit *vec) {
     printf("[");
     for(size_t i=0; i<vec->len; i++) {
         if(i!=vec->len-1) {
@@ -177,34 +192,34 @@ void vec_print(Vec *vec) {
     printf("]");
 }
 
-void vec_println(Vec *vec) {
-    vec_print(vec);
+void split_println(StringSplit *vec) {
+    split_print(vec);
     printf("\n");
 }
 
-void vec_print_debug(Vec *vec) {
+void split_print_debug(StringSplit *vec) {
     printf("Vec { len: %zu, capacity: %zu, arr: ", vec->len, vec->capacity);
-    vec_print(vec);
+    split_print(vec);
     printf(" }");
 }
 
-void vec_println_debug(Vec *vec) {
-    vec_print_debug(vec);
+void split_println_debug(StringSplit *vec) {
+    split_print_debug(vec);
     printf("\n");
 }
 
-String vec_at(Vec *vec, int64_t index) {
+String split_at(StringSplit *vec, int64_t index) {
     __assert(index>=0, "Accessing at index %lld is not allowed.", index);
     __assert((size_t)index<vec->len, "Accessing at index %lld, but the length is %zd.", index, vec->len);
     return vec->arr[index];
 }
 
-void vec_free(Vec *vec) {
+void split_free(StringSplit *vec) {
     for(size_t i=0; i<vec->len; i++) {
         free(vec->arr[i].arr);
     }
     vec->len = 0;
-    vec->capacity = INIT_VEC_CAP;
+    vec->capacity = INIT_split_CAP;
     free(vec->arr);
     vec->arr = NULL;
 }

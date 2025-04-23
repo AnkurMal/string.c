@@ -2,13 +2,12 @@
 #include <stdio.h>
 
 int main(void) {
-    String str = String("Hello World");
-    Vec spl = string_split(&str, " ");
-    foreach(i, spl) {
-        string_println(&i);
-    }
+    printf("Enter a string: ");
+    String str = string_input();
 
-    vec_free(&spl);
+    printf("The string entered: ");
+    string_println(&str);
+
     string_free(&str);
     return 0;
 }

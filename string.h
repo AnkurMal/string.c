@@ -17,35 +17,36 @@ typedef struct String {
     char   *arr;
 } String;
 
-typedef struct Vec {
+typedef struct StringSplit {
     size_t len;
     size_t capacity;
     String *arr;
-} Vec;
+} StringSplit;
 
-String string_new(const char *str);
-void   string_print(String *str);
-void   string_println(String *str);
-void   string_print_debug(String *str);
-void   string_println_debug(String *str);
-char   string_at(String *str, int64_t index);
-void   string_push(String *str, char character);
-Vec    string_split(String *str, const char *delimeter); 
-void   string_free(String *str);
-bool   string_equals(String *str1, String *str2);
-void   string_map(String *str, void (*func)(String *str));
-void   string_change(String *str, int64_t index, char chr);
-void   string_to_upper(String *str);
-void   string_to_lower(String *str);
+String      string_new(const char *str);
+void        string_print(String *str);
+void        string_println(String *str);
+void        string_print_debug(String *str);
+void        string_println_debug(String *str);
+char        string_at(String *str, int64_t index);
+void        string_push(String *str, char character);
+StringSplit string_split(String *str, const char *delimeter); 
+void        string_free(String *str);
+bool        string_equals(String *str1, String *str2);
+void        string_map(String *str, void (*func)(String *str));
+void        string_change(String *str, int64_t index, char chr);
+void        string_to_upper(String *str);
+void        string_to_lower(String *str);
+String      string_input();
 
-Vec    vec_new();
-void   vec_free(Vec *vec);
-void   vec_push(Vec *vec, String data);
-String vec_pop(Vec *vec);
-String vec_at(Vec *vec, int64_t index);
-void   vec_print(Vec *vec);
-void   vec_println(Vec *vec);
-void   vec_print_debug(Vec *vec);
-void   vec_println_debug(Vec *vec);
+StringSplit split_new();
+void        split_free(StringSplit *vec);
+void        split_push(StringSplit *vec, String data);
+String      split_pop(StringSplit *vec);
+String      split_at(StringSplit *vec, int64_t index);
+void        split_print(StringSplit *vec);
+void        split_println(StringSplit *vec);
+void        split_print_debug(StringSplit *vec);
+void        split_println_debug(StringSplit *vec);
 
-char   *format(const char *fmt, ...);
+char        *format(const char *fmt, ...);
