@@ -42,6 +42,8 @@ bool        string_is_empty(String *str);
 void        string_trim_right(String *str);
 void        string_trim_left(String *str);
 void        string_trim(String *str);
+String      string_read_file(const char *filename);
+StringSplit string_lines(String *str);
 
 StringSplit split_new();
 void        split_free(StringSplit *vec);

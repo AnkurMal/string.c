@@ -10,8 +10,14 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#define INIT_STRING_CAP   256
-#define INIT_SPLIT_CAP    8
+#ifdef _WIN32
+    #define NEWLINE "\r\n"
+#else
+    #define NEWLINE "\n"
+#endif
+
+#define INIT_STRING_CAP 256
+#define INIT_SPLIT_CAP  8
 
 #define __assert(expression, format, ...) \
     do { \
@@ -178,6 +184,24 @@ void string_trim_left(String *str) {
 void string_trim(String *str) {
     string_trim_left(str);
     string_trim_right(str);
+}
+
+String string_read_file(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    __assert(file!=NULL, "Could not open %s", filename);
+
+    String buff = String("");
+    char ch;
+    while ((ch = (char)fgetc(file)) != EOF) {
+        string_push(&buff, ch);
+    }
+
+    fclose(file);
+    return buff;
+}
+
+StringSplit string_lines(String *str) {
+    return string_split(str, NEWLINE);
 }
 
 StringSplit split_new() {
