@@ -28,7 +28,39 @@
         } \
     } while(0)
 
-String string_new(const char *str) {
+void _append_str_internal_char(String *str, const char *append) {
+    size_t len = strlen(append);
+
+    if(str->capacity - str->len < len) {
+        str->capacity = len + str->len;
+        char *new  = realloc(str->arr, str->capacity);
+        __assert(new!=NULL, "Not enough memory append string.");
+        str->arr = new;
+    }
+    
+    memcpy(&str->arr[str->len], append, len);
+    str->len += len;
+}
+
+void _append_str_internal_string(String *str, String *append) {
+    if(str->capacity - str->len < append->len) {
+        str->capacity = append->len + str->len;
+        char *new  = realloc(str->arr, str->capacity);
+        __assert(new!=NULL, "Not enough memory append string.");
+        str->arr = new;
+    }
+    
+    memcpy(&str->arr[str->len], append->arr, append->len);
+    str->len += append->len;
+}
+
+void _report_append_error_internal(String *str, ...) {
+    (void)str;
+    __assert(false, "Cannot append an invalid data type.");
+}
+
+String string_new(const char *str)
+{
     String string;
     
     string.len = strlen(str);
@@ -43,7 +75,7 @@ String string_new(const char *str) {
     return string;
 }
 
-String string_new_with_len(const char *str, size_t len) {
+String string_with_len(const char *str, size_t len) {
     String string;
     
     string.len = len;
@@ -97,29 +129,24 @@ void string_push(String *str, char character) {
 }
 
 StringSplit string_split(String *str, const char *delimeter) {
-    StringSplit split = split_new();
+    StringSplit spl = split_new();
     size_t del_len = strlen(delimeter);
-    size_t current = 0;
+    size_t current = 0, track = 0;
 
-    char *string = malloc(str->len + 1);
-    __assert(string!=NULL, "Not enough memory.");
-    memcpy(string, str->arr, str->len);
-    string[str->len] = '\0';
-
-    char *str_ptr = strstr(string, delimeter);
-    while(str_ptr) {
-        size_t index = str_ptr - &string[current];
-        split_push(&split, string_new_with_len(&string[current], index));
-
-        current += index+del_len;
-        str_ptr = strstr(&string[current], delimeter);
+    while (current <= str->len - del_len) {
+        if(memcmp(&str->arr[current], delimeter, del_len) == 0) {
+            split_push(&spl, string_with_len(&str->arr[track], current - track));
+            current += del_len;
+            track = current;
+        }
+        else
+            current++;
     }
-    if (current <= str->len) {
-        split_push(&split, string_new(&string[current]));
+    if (track <= str->len) {
+        split_push(&spl, string_with_len(&str->arr[track], str->len - track));
     }
-
-    free(string);
-    return split;
+    
+    return spl;
 }
 
 void string_free(String *str) {
@@ -195,14 +222,20 @@ void string_trim(String *str) {
 }
 
 String string_read_file(const char *filename) {
-    FILE *file = fopen(filename, "r");
+    FILE *file = fopen(filename, "rb");
     __assert(file!=NULL, "Could not open %s", filename);
 
-    String buff = String("");
-    char ch;
-    while ((ch = (char)fgetc(file)) != EOF) {
-        string_push(&buff, ch);
-    }
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+
+    String buff;
+    buff.len = size;
+    buff.capacity = size;
+    buff.arr = (char *)malloc(buff.capacity);
+    __assert(buff.arr!=NULL, "Not enough memory to create new string.");
+
+    fread(buff.arr, 1, size, file);
 
     fclose(file);
     return buff;

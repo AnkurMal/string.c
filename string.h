@@ -11,6 +11,12 @@
 
 #define String(str) string_new(str)
 
+#define string_append(str_ptr, append) _Generic((append), \
+    char*:   _append_str_internal_char, \
+    String*: _append_str_internal_string, \
+    default: _report_append_error_internal \
+)(str_ptr, append)
+
 typedef struct String {
     size_t len;
     size_t capacity;
@@ -23,8 +29,12 @@ typedef struct StringSplit {
     String *arr;
 } StringSplit;
 
+void _append_str_internal_char(String *str, const char *append);
+void _append_str_internal_string(String *str, String *append);
+void _report_append_error_internal(String *str, ...);
+
 String      string_new(const char *str);
-String      string_new_with_len(const char *str, size_t len);
+String      string_with_len(const char *str, size_t len);
 void        string_print(String *str);
 void        string_println(String *str);
 void        string_print_debug(String *str);
