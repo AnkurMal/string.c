@@ -44,15 +44,16 @@ void        string_trim_left(String *str);
 void        string_trim(String *str);
 String      string_read_file(const char *filename);
 StringSplit string_lines(String *str);
+String      string_clone(String *str);
 
 StringSplit split_new();
-void        split_free(StringSplit *vec);
-void        split_push(StringSplit *vec, String data);
-String      split_pop(StringSplit *vec);
-String      split_at(StringSplit *vec, int64_t index);
-void        split_print(StringSplit *vec);
-void        split_println(StringSplit *vec);
-void        split_print_debug(StringSplit *vec);
-void        split_println_debug(StringSplit *vec);
+void        split_free(StringSplit *split);
+void        split_push(StringSplit *split, String data);
+String      split_pop(StringSplit *split);
+String      split_at(StringSplit *split, int64_t index);
+void        split_print(StringSplit *split);
+void        split_println(StringSplit *split);
+void        split_print_debug(StringSplit *split);
+void        split_println_debug(StringSplit *split);
 
 char        *format(const char *fmt, ...);

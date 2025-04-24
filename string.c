@@ -23,7 +23,7 @@
     do { \
         if (!(expression)) { \
             fprintf(stderr, "Error in file %s; line %d in function %s:\n", __FILE__, __LINE__, __func__); \
-            fprintf(stderr, format "\n", ##__VA_ARGS__); \
+            fprintf(stderr, format"\n" __VA_OPT__(,) __VA_ARGS__); \
             exit(EXIT_FAILURE); \
         } \
     } while(0)
@@ -36,7 +36,7 @@ String string_new(const char *str) {
 
     while (string.capacity < string.len) string.capacity *= 2;
     string.arr = (char *)malloc(string.capacity);
-    __assert(string.arr!=NULL, "%s", "Not enough memory to create new string.");
+    __assert(string.arr!=NULL, "Not enough memory to create new string.");
 
     memcpy(string.arr, str, string.len);
 
@@ -82,12 +82,12 @@ void string_push(String *str, char character) {
 }
 
 StringSplit string_split(String *str, const char *delimeter) {
-    StringSplit vec = split_new();
+    StringSplit split = split_new();
     size_t del_len = strlen(delimeter);
     size_t current = 0;
 
     char *string = malloc(str->len + 1);
-    __assert(string!=NULL, "%s", "Not enough memory.");
+    __assert(string!=NULL, "Not enough memory.");
     memcpy(string, str->arr, str->len);
     string[str->len] = '\0';
 
@@ -96,22 +96,22 @@ StringSplit string_split(String *str, const char *delimeter) {
         size_t index = str_ptr - &string[current];
 
         char *slice = malloc(index + 1);
-        __assert(slice!=NULL, "%s", "Not enough memory.");
+        __assert(slice!=NULL, "Not enough memory.");
         memcpy(slice, &string[current], index);
         slice[index] = '\0';
 
-        split_push(&vec, string_new(slice));
+        split_push(&split, string_new(slice));
         free(slice);
 
         current += index+del_len;
         str_ptr = strstr(&string[current], delimeter);
     }
     if (current < str->len) {
-        split_push(&vec, string_new(&string[current]));
+        split_push(&split, string_new(&string[current]));
     }
 
     free(string);
-    return vec;
+    return split;
 }
 
 void string_free(String *str) {
@@ -204,76 +204,86 @@ StringSplit string_lines(String *str) {
     return string_split(str, NEWLINE);
 }
 
+String string_clone(String *str) {
+    String clone;
+    clone.capacity = str->capacity;
+    clone.len = str->len;
+    clone.arr = malloc(str->len);
+
+    memcpy(clone.arr, str->arr, str->len);
+    return clone;
+}
+
 StringSplit split_new() {
     String *arr = malloc(sizeof(String)*INIT_SPLIT_CAP);
-    __assert(arr!=NULL, "%s", "Not enough memory to create new vector.");
-    StringSplit vec = {0, INIT_SPLIT_CAP, arr};
+    __assert(arr!=NULL, "Not enough memory to create new split.");
+    StringSplit split = {0, INIT_SPLIT_CAP, arr};
 
-    return vec;
+    return split;
 }
 
-void split_push(StringSplit *vec, String data) {
-    if(vec->len==vec->capacity) {
-        vec->capacity *= 2;
-        String *new = realloc(vec->arr, sizeof(String)*vec->capacity);
-        __assert(new!=NULL, "%s", "Not enough memory to insert string.");
-        vec->arr = new;
+void split_push(StringSplit *split, String data) {
+    if(split->len==split->capacity) {
+        split->capacity *= 2;
+        String *new = realloc(split->arr, sizeof(String)*split->capacity);
+        __assert(new!=NULL, "Not enough memory to insert string.");
+        split->arr = new;
     }
-    vec->arr[vec->len++] = data;
+    split->arr[split->len++] = data;
 }
 
-String split_pop(StringSplit *vec) {
-    __assert(vec->len>0, "%s", "Cannot pop, vector underflow.");
-    return vec->arr[--vec->len];
+String split_pop(StringSplit *split) {
+    __assert(split->len>0, "Cannot pop, split underflow.");
+    return split->arr[--split->len];
 }
 
-void split_print(StringSplit *vec) {
+void split_print(StringSplit *split) {
     printf("[");
-    for(size_t i=0; i<vec->len; i++) {
-        if(i!=vec->len-1) {
+    for(size_t i=0; i<split->len; i++) {
+        if(i!=split->len-1) {
             printf("\"");
-            string_print(&vec->arr[i]);
+            string_print(&split->arr[i]);
             printf("\", ");
         }
         else {
             printf("\"");
-            string_print(&vec->arr[i]);
+            string_print(&split->arr[i]);
             printf("\"");
         }
     }
     printf("]");
 }
 
-void split_println(StringSplit *vec) {
-    split_print(vec);
+void split_println(StringSplit *split) {
+    split_print(split);
     printf("\n");
 }
 
-void split_print_debug(StringSplit *vec) {
-    printf("Vec { len: %zu, capacity: %zu, arr: ", vec->len, vec->capacity);
-    split_print(vec);
+void split_print_debug(StringSplit *split) {
+    printf("StringSplit { len: %zu, capacity: %zu, arr: ", split->len, split->capacity);
+    split_print(split);
     printf(" }");
 }
 
-void split_println_debug(StringSplit *vec) {
-    split_print_debug(vec);
+void split_println_debug(StringSplit *split) {
+    split_print_debug(split);
     printf("\n");
 }
 
-String split_at(StringSplit *vec, int64_t index) {
+String split_at(StringSplit *split, int64_t index) {
     __assert(index>=0, "Accessing at index %lld is not allowed.", index);
-    __assert((size_t)index<vec->len, "Accessing at index %lld, but the length is %zd.", index, vec->len);
-    return vec->arr[index];
+    __assert((size_t)index<split->len, "Accessing at index %lld, but the length is %zd.", index, split->len);
+    return split->arr[index];
 }
 
-void split_free(StringSplit *vec) {
-    for(size_t i=0; i<vec->len; i++) {
-        free(vec->arr[i].arr);
+void split_free(StringSplit *split) {
+    for(size_t i=0; i<split->len; i++) {
+        free(split->arr[i].arr);
     }
-    vec->len = 0;
-    vec->capacity = INIT_SPLIT_CAP;
-    free(vec->arr);
-    vec->arr = NULL;
+    split->len = 0;
+    split->capacity = INIT_SPLIT_CAP;
+    free(split->arr);
+    split->arr = NULL;
 }
 
 char *format(const char *fmt, ...) {
