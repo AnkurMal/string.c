@@ -43,6 +43,21 @@ String string_new(const char *str) {
     return string;
 }
 
+String string_new_with_len(const char *str, size_t len) {
+    String string;
+    
+    string.len = len;
+    string.capacity = INIT_STRING_CAP;
+
+    while (string.capacity < string.len) string.capacity *= 2;
+    string.arr = (char *)malloc(string.capacity);
+    __assert(string.arr!=NULL, "Not enough memory to create new string.");
+
+    memcpy(string.arr, str, string.len);
+
+    return string;
+}
+
 void string_print(String *str) {
     for(size_t i=0; i < str->len; i++) {
         printf("%c", str->arr[i]);
@@ -94,19 +109,12 @@ StringSplit string_split(String *str, const char *delimeter) {
     char *str_ptr = strstr(string, delimeter);
     while(str_ptr) {
         size_t index = str_ptr - &string[current];
-
-        char *slice = malloc(index + 1);
-        __assert(slice!=NULL, "Not enough memory.");
-        memcpy(slice, &string[current], index);
-        slice[index] = '\0';
-
-        split_push(&split, string_new(slice));
-        free(slice);
+        split_push(&split, string_new_with_len(&string[current], index));
 
         current += index+del_len;
         str_ptr = strstr(&string[current], delimeter);
     }
-    if (current < str->len) {
+    if (current <= str->len) {
         split_push(&split, string_new(&string[current]));
     }
 

@@ -3,14 +3,10 @@
 #include <stdio.h>
 
 int main(void) {
-    char *fmt = format("Heyy %d %s", 2, "6");
-    String str = String(fmt);
-    String clone = string_clone(&str);
+    String str = String(",a,a,");
+    foreach(i, string_split(&str, ",")) {
+        string_println(i);
+    }
 
-    string_println_debug(&str);
-    string_println_debug(&clone);
-
-    string_free(&str);
-    free(fmt);
     return 0;
 }

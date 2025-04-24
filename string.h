@@ -6,8 +6,8 @@
 
 // credit: <https://stackoverflow.com/a/400970>
 #define foreach(item, var) \
-    for(size_t keep = 1, count = 0; keep && count != var.len; keep = !keep, count++) \
-        for(typeof(var.arr[0]) item = var.arr[count]; keep; keep = !keep)
+    for(size_t keep = 1, count = 0; keep && count != (var).len; keep = !keep, count++) \
+        for(typeof((var).arr[0]) *(item) = &(var).arr[count]; keep; keep = !keep)
 
 #define String(str) string_new(str)
 
@@ -24,6 +24,7 @@ typedef struct StringSplit {
 } StringSplit;
 
 String      string_new(const char *str);
+String      string_new_with_len(const char *str, size_t len);
 void        string_print(String *str);
 void        string_println(String *str);
 void        string_print_debug(String *str);
