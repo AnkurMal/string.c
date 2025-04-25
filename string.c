@@ -19,13 +19,13 @@
 #define INIT_STRING_CAP 256
 #define INIT_SPLIT_CAP  8
 
-#define __assert(expression, format, ...) \
-    do { \
-        if (!(expression)) { \
+#define __assert(expression, format, ...)                                                                 \
+    do {                                                                                                  \
+        if (!(expression)) {                                                                              \
             fprintf(stderr, "Error in file %s; line %d in function %s:\n", __FILE__, __LINE__, __func__); \
-            fprintf(stderr, format"\n" __VA_OPT__(,) __VA_ARGS__); \
-            exit(EXIT_FAILURE); \
-        } \
+            fprintf(stderr, format"\n" __VA_OPT__(,) __VA_ARGS__);                                        \
+            exit(EXIT_FAILURE);                                                                           \
+        }                                                                                                 \
     } while(0)
 
 void _append_str_internal_char(String *str, const char *append) {
@@ -42,7 +42,7 @@ void _append_str_internal_char(String *str, const char *append) {
     str->len += len;
 }
 
-void _append_str_internal_string(String *str, String *append) {
+void _append_str_internal_string(String *str, const String *append) {
     if(str->capacity - str->len < append->len) {
         str->capacity = append->len + str->len;
         char *new  = realloc(str->arr, str->capacity);

@@ -5,17 +5,19 @@
 #include <stdarg.h>
 
 // credit: <https://stackoverflow.com/a/400970>
-#define foreach(item, var) \
+#define foreach(item, var)                                                             \
     for(size_t keep = 1, count = 0; keep && count != (var).len; keep = !keep, count++) \
         for(typeof((var).arr[0]) *(item) = &(var).arr[count]; keep; keep = !keep)
 
 #define String(str) string_new(str)
 
-#define string_append(str_ptr, append) _Generic((append), \
-    char*:   _append_str_internal_char, \
-    String*: _append_str_internal_string, \
-    default: _report_append_error_internal \
-)(str_ptr, append)
+#define string_append(str_ptr, append_ptr) _Generic((append_ptr),       \
+    const char*:   _append_str_internal_char,                           \
+    char*:         _append_str_internal_char,                           \
+    const String*: _append_str_internal_string,                         \
+    String*:       _append_str_internal_string,                         \
+    default:       _report_append_error_internal                        \
+)(str_ptr, append_ptr)
 
 typedef struct String {
     size_t len;
@@ -30,7 +32,7 @@ typedef struct StringSplit {
 } StringSplit;
 
 void _append_str_internal_char(String *str, const char *append);
-void _append_str_internal_string(String *str, String *append);
+void _append_str_internal_string(String *str, const String *append);
 void _report_append_error_internal(String *str, ...);
 
 String      string_new(const char *str);
