@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <errno.h>
 
 #ifdef _WIN32
     #define NEWLINE "\r\n"
@@ -28,13 +29,24 @@
         }                                                                                                 \
     } while(0)
 
-void _append_str_internal_char(String *str, const char *append) {
+int64_t _report_error_internal(String *str, ...) {
+    (void)str;
+    __assert(false, "An invalid data type was passed.");
+}
+
+void _report_error_internal_parse(String *str) {
+    (void)str;
+    __assert(false, "An invalid data type was passed.");
+}
+
+void _append_str_internal_char(String *str, const char *append)
+{
     size_t len = strlen(append);
 
     if(str->capacity - str->len < len) {
         str->capacity = len + str->len;
         char *new  = realloc(str->arr, str->capacity);
-        __assert(new!=NULL, "Not enough memory append string.");
+        __assert(new!=NULL, "Not enough memory to append string.");
         str->arr = new;
     }
     
@@ -46,7 +58,7 @@ void _append_str_internal_string(String *str, const String *append) {
     if(str->capacity - str->len < append->len) {
         str->capacity = append->len + str->len;
         char *new  = realloc(str->arr, str->capacity);
-        __assert(new!=NULL, "Not enough memory append string.");
+        __assert(new!=NULL, "Not enough memory to append string.");
         str->arr = new;
     }
     
@@ -54,13 +66,164 @@ void _append_str_internal_string(String *str, const String *append) {
     str->len += append->len;
 }
 
-void _report_append_error_internal(String *str, ...) {
-    (void)str;
-    __assert(false, "Cannot append an invalid data type.");
+void _insert_str_internal_char(String *str, const char *insert, int64_t index) {
+    __assert(index>=0, "Inserting at index %lld is not allowed.", index);
+    __assert((size_t)index<=str->len, "Inserting at index %lld, but the length is %zd.", index, str->len);
+
+    size_t ins_len = strlen(insert);
+    if (ins_len == 0) return; 
+
+    if (str->len + ins_len > str->capacity) {
+        size_t new_cap = (str->len + ins_len) * 2;
+        str->arr = realloc(str->arr, new_cap);
+        __assert(str->arr != NULL, "Not enough memory to insert string.");
+        str->capacity = new_cap;
+    }
+
+    memmove(&str->arr[index + ins_len], &str->arr[index], str->len - index);
+    memcpy(&str->arr[index], insert, ins_len);
+
+    str->len += ins_len;
 }
 
-String string_new(const char *str)
-{
+void _insert_str_internal_string(String *str, const String *insert, int64_t index) {
+    __assert(index>=0, "Inserting at index %lld is not allowed.", index);
+    __assert((size_t)index<=str->len, "Inserting at index %lld, but the length is %zd.", index, str->len);
+
+    if (insert->len == 0) return; 
+
+    if (str->len + insert->len > str->capacity) {
+        size_t new_cap = (str->len + insert->len) * 2;
+        str->arr = realloc(str->arr, new_cap);
+        __assert(str->arr != NULL, "Not enough memory to insert string.");
+        str->capacity = new_cap;
+    }
+
+    memmove(&str->arr[index + insert->len], &str->arr[index], str->len - index);
+    memcpy(&str->arr[index], insert, insert->len);
+
+    str->len += insert->len;
+}
+
+long _parse_str_internal_long(String *str) {
+    __assert(str->len>0, "Cannot parse an empty string.");
+    char *cstr = string_to_cstring(str);
+
+    char *endptr = NULL;
+    errno = 0;
+    long res = strtol(cstr, &endptr, 10);
+
+    __assert(errno!=ERANGE, "Intager value out of range.");
+    __assert(*endptr=='\0', "Cannot parse an invalid digit.");
+
+    free(cstr);
+    return res;
+}
+
+double _parse_str_internal_double(String *str) {
+    __assert(str->len>0, "Cannot parse an empty string.");
+    char *cstr = string_to_cstring(str);
+
+    char *endptr = NULL;
+    errno = 0;
+    double res = strtod(cstr, &endptr);
+
+    __assert(errno!=ERANGE, "Double value out of range.");
+    __assert(*endptr=='\0', "Cannot parse an invalid digit.");
+
+    free(cstr);
+    return res;
+}
+
+int64_t _find_str_internal_char(String *str, const char *pat) {
+    size_t len = strlen(pat);
+
+    for(size_t i=0; i <= str->len-len; i++) {
+        if(memcmp(&str->arr[i], pat, len) == 0) return i;
+    }
+    return -1;
+}
+
+int64_t _find_str_internal_string(String *str, const String *pat) {
+    for(size_t i=0; i <= str->len-pat->len; i++) {
+        if(memcmp(&str->arr[i], pat->arr, pat->len) == 0) return i;
+    }
+    return -1;
+}
+
+void _remove_str_internal_char(String *str, const char *pat) {
+    int64_t index = _find_str_internal_char(str, pat);
+    size_t len = strlen(pat);
+
+    if(index!=-1) {
+        memmove(&str->arr[index], &str->arr[index+len], str->len - (index+len));
+        str->len -= len;
+    }
+}
+
+void _remove_str_internal_string(String *str, const String *pat) {
+    int64_t index = _find_str_internal_string(str, pat);
+
+    if(index!=-1) {
+        memmove(&str->arr[index], &str->arr[index+pat->len], str->len - (index+pat->len));
+        str->len -= pat->len;
+    }
+}
+
+bool _equal_str_internal_char(String *str1, const char *str2) {
+    size_t len = strlen(str2);
+    if (str1->len != len) return false;
+    return memcmp(str1->arr, str2, str1->len) == 0;
+}
+
+bool _equal_str_internal_string(String *str1, const String *str2) {
+    if (str1->len != str2->len) return false;
+    return memcmp(str1->arr, str2->arr, str1->len) == 0;
+}
+
+void _remove_spl_internal_char(StringSplit *split, const char *pat) {
+    size_t current = 0;
+
+    while (current < split->len) {
+        if(_equal_str_internal_char(&split->arr[current], pat)) {
+            for(size_t i=current; i<split->len-1; i++) {
+                split->arr[i] = split->arr[i+1];
+            }
+            split->len--;
+        }
+        else
+            current++;
+    }
+}
+
+void _remove_spl_internal_string(StringSplit *split, const String *pat) {
+    size_t current = 0;
+
+    while (current < split->len) {
+        if(_equal_str_internal_string(&split->arr[current], pat)) {
+            for(size_t i=current; i<split->len-1; i++) {
+                split->arr[i] = split->arr[i+1];
+            }
+            split->len--;
+        }
+        else
+            current++;
+    }
+}
+
+bool _contains_spl_internal_char(StringSplit *split, const char *str) {
+    for(size_t i=0; i<split->len; i++)
+        if(_equal_str_internal_char(&split->arr[i], str)) return true;
+    return false;
+}
+
+bool _contains_spl_internal_string(StringSplit *split, const String *str) {
+    for(size_t i=0; i<split->len; i++)
+        if(_equal_str_internal_string(&split->arr[i], str)) return true;
+    return false;
+}
+
+String string_new(const char *str) {
     String string;
     
     string.len = strlen(str);
@@ -73,6 +236,15 @@ String string_new(const char *str)
     memcpy(string.arr, str, string.len);
 
     return string;
+}
+
+char *string_to_cstring(String *str) {
+    char *ptr = malloc(str->len+1);
+    __assert(ptr!=NULL, "Not enough memory to create new cstring.");
+    memcpy(ptr, str->arr, str->len);
+    ptr[str->len] = '\0';
+
+    return ptr;
 }
 
 String string_with_len(const char *str, size_t len) {
@@ -131,19 +303,28 @@ void string_push(String *str, char character) {
 StringSplit string_split(String *str, const char *delimeter) {
     StringSplit spl = split_new();
     size_t del_len = strlen(delimeter);
-    size_t current = 0, track = 0;
-
-    while (current <= str->len - del_len) {
-        if(memcmp(&str->arr[current], delimeter, del_len) == 0) {
-            split_push(&spl, string_with_len(&str->arr[track], current - track));
-            current += del_len;
-            track = current;
+    
+    if (del_len == 0) {
+        split_push(&spl, string_with_len("", 0)); 
+        for (size_t i = 0; i < str->len; i++) {
+            split_push(&spl, string_with_len(&str->arr[i], 1));
         }
-        else
-            current++;
+        split_push(&spl, string_with_len("", 0)); 
+        return spl;
     }
-    if (track <= str->len) {
-        split_push(&spl, string_with_len(&str->arr[track], str->len - track));
+    else {
+        size_t current = 0, track = 0;
+        while (current <= str->len - del_len) {
+            if(memcmp(&str->arr[current], delimeter, del_len) == 0) {
+                split_push(&spl, string_with_len(&str->arr[track], current - track));
+                current += del_len;
+                track = current;
+            }
+            else
+                current++;
+        }
+        if (track <= str->len) 
+            split_push(&spl, string_with_len(&str->arr[track], str->len - track));
     }
     
     return spl;
@@ -154,11 +335,6 @@ void string_free(String *str) {
     str->len = 0;
     str->capacity = INIT_STRING_CAP;
     str->arr = NULL;
-}
-
-bool string_equals(String *str1, String *str2) {
-    if (str1->len != str2->len) return false;
-    return memcmp(str1->arr, str2->arr, str1->len) == 0;
 }
 
 void string_map(String *str, void (*func)(String *str)) {
@@ -253,6 +429,14 @@ String string_clone(String *str) {
 
     memcpy(clone.arr, str->arr, str->len);
     return clone;
+}
+
+void string_clear(String *str) {
+    str->len = 0;
+}
+
+bool string_contains(String *str, char ch) {
+    return memchr(str->arr, ch, str->len) != NULL;
 }
 
 StringSplit split_new() {

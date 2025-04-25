@@ -2,9 +2,8 @@
 #include <stdio.h>
 
 int main(void) {
-    String str = String("Ankur");
-    string_append(&str, " Mallick");
-    string_println(&str);
+    String str = String("9");
+    printf("%f", string_parse(&str, double));
 
     return 0;
 }
