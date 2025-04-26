@@ -3,7 +3,7 @@
 
 int main(void) {
     String str = String("9");
-    printf("%f", string_parse(&str, double));
+    printf("%ld", string_parse(&str, long));
 
     return 0;
 }

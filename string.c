@@ -29,6 +29,28 @@
         }                                                                                                 \
     } while(0)
 
+#define parse_macro_for_long(type, type_str, func_name)                                                   \
+    __assert(str->len>0, "Cannot parse an empty string.");                                                \
+    char *cstr = string_to_cstring(str);                                                                  \
+    char *endptr = NULL;                                                                                  \
+    errno = 0;                                                                                            \
+    type res = func_name(cstr, &endptr, 10);                                                              \
+    __assert(errno!=ERANGE, "Parsed value out of range for "type_str".");                                 \
+    __assert(*endptr=='\0', "Cannot parse an invalid digit.");                                            \
+    free(cstr);                                                                                           \
+    return res;                                                                           
+                              
+#define parse_macro_for_double(type, type_str, func_name)                                                 \
+    __assert(str->len>0, "Cannot parse an empty string.");                                                \
+    char *cstr = string_to_cstring(str);                                                                  \
+    char *endptr = NULL;                                                                                  \
+    errno = 0;                                                                                            \
+    type res = func_name(cstr, &endptr);                                                                  \
+    __assert(errno!=ERANGE, "Parsed value out of range for "type_str".");                                 \
+    __assert(*endptr=='\0', "Cannot parse an invalid digit.");                                            \
+    free(cstr);                                                                                           \
+    return res;                                             
+
 int64_t _report_error_internal(String *str, ...) {
     (void)str;
     __assert(false, "An invalid data type was passed.");
@@ -106,37 +128,36 @@ void _insert_str_internal_string(String *str, const String *insert, int64_t inde
 }
 
 long _parse_str_internal_long(String *str) {
-    __assert(str->len>0, "Cannot parse an empty string.");
-    char *cstr = string_to_cstring(str);
+    parse_macro_for_long(long, "long", strtol);
+}
 
-    char *endptr = NULL;
-    errno = 0;
-    long res = strtol(cstr, &endptr, 10);
+long long _parse_str_internal_long_long(String *str) {
+    parse_macro_for_long(long long, "long long", strtoll);
+}
 
-    __assert(errno!=ERANGE, "Intager value out of range.");
-    __assert(*endptr=='\0', "Cannot parse an invalid digit.");
+unsigned long _parse_str_internal_unsigned_long(String *str) {
+    parse_macro_for_long(unsigned long, "unsigned long", strtoul);
+}
 
-    free(cstr);
-    return res;
+unsigned long long _parse_str_internal_unsigned_long_long(String *str) {
+    parse_macro_for_long(unsigned long long, "unsigned long long", strtoull);
 }
 
 double _parse_str_internal_double(String *str) {
-    __assert(str->len>0, "Cannot parse an empty string.");
-    char *cstr = string_to_cstring(str);
+    parse_macro_for_double(double, "double", strtod);
+}
 
-    char *endptr = NULL;
-    errno = 0;
-    double res = strtod(cstr, &endptr);
+long double _parse_str_internal_long_double(String *str) {
+    parse_macro_for_double(long double, "long double", strtold);
+}
 
-    __assert(errno!=ERANGE, "Double value out of range.");
-    __assert(*endptr=='\0', "Cannot parse an invalid digit.");
-
-    free(cstr);
-    return res;
+float _parse_str_internal_float(String *str) {
+    parse_macro_for_double(float, "float", strtof);
 }
 
 int64_t _find_str_internal_char(String *str, const char *pat) {
     size_t len = strlen(pat);
+    if(len==0) return 0;
 
     for(size_t i=0; i <= str->len-len; i++) {
         if(memcmp(&str->arr[i], pat, len) == 0) return i;
@@ -145,6 +166,7 @@ int64_t _find_str_internal_char(String *str, const char *pat) {
 }
 
 int64_t _find_str_internal_string(String *str, const String *pat) {
+    if(pat->len==0) return 0;
     for(size_t i=0; i <= str->len-pat->len; i++) {
         if(memcmp(&str->arr[i], pat->arr, pat->len) == 0) return i;
     }
@@ -411,7 +433,8 @@ String string_read_file(const char *filename) {
     buff.arr = (char *)malloc(buff.capacity);
     __assert(buff.arr!=NULL, "Not enough memory to create new string.");
 
-    fread(buff.arr, 1, size, file);
+    size_t read = fread(buff.arr, 1, size, file);
+    __assert(read == size, "Failed to read the whole file.");
 
     fclose(file);
     return buff;
@@ -425,7 +448,7 @@ String string_clone(String *str) {
     String clone;
     clone.capacity = str->capacity;
     clone.len = str->len;
-    clone.arr = malloc(str->len);
+    clone.arr = malloc(str->capacity);
 
     memcpy(clone.arr, str->arr, str->len);
     return clone;
@@ -437,6 +460,19 @@ void string_clear(String *str) {
 
 bool string_contains(String *str, char ch) {
     return memchr(str->arr, ch, str->len) != NULL;
+}
+
+int string_compare(String *str1, String *str2) {
+    size_t min_len = str1->len < str2->len ? str1->len : str2->len;
+    int cmp = memcmp(str1->arr, str2->arr, min_len);
+
+    if (cmp < 0) return -1;
+    if (cmp > 0) return 1;
+
+    if (str1->len < str2->len) return -1;
+    if (str1->len > str2->len) return 1;
+
+    return 0;
 }
 
 StringSplit split_new() {
