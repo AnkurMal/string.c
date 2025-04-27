@@ -147,6 +147,7 @@ String             string_clone(String *str);
 void               string_clear(String *str);
 bool               string_contains(String *str, char ch);
 int                string_compare(String *str1, String *str2);
+void               string_reverse(String *str);
 
 StringSplit        split_new();
 void               split_free(StringSplit *split);

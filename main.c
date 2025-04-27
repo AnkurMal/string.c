@@ -2,8 +2,9 @@
 #include <stdio.h>
 
 int main(void) {
-    String str = String("9");
-    printf("%ld", string_parse(&str, long));
+    String str = String("1");
+    string_reverse(&str);
+    string_println(&str);
 
     return 0;
 }

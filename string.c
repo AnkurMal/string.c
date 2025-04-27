@@ -475,6 +475,14 @@ int string_compare(String *str1, String *str2) {
     return 0;
 }
 
+void string_reverse(String *str) {
+    for(size_t i=0; i<str->len/2; i++) {
+        char temp = str->arr[i];
+        str->arr[i] = str->arr[str->len-i-1];
+        str->arr[str->len-i-1] = temp;
+    }
+}
+
 StringSplit split_new() {
     String *arr = malloc(sizeof(String)*INIT_SPLIT_CAP);
     __assert(arr!=NULL, "Not enough memory to create new split.");
